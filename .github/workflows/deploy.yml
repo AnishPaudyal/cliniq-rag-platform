@@ -1,0 +1,14 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
+        run: curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"

@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: cliniq-backend
+    env: docker
+    rootDir: backend
+    plan: starter
+    healthCheckPath: /health/live
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: POSTGRES_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: QDRANT_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: MLFLOW_TRACKING_URI
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false
