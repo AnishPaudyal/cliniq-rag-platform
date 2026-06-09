@@ -4,14 +4,14 @@ from contextlib import asynccontextmanager
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from slowapi.util import get_remote_address
 from starlette.responses import JSONResponse
 
+from app.api.limiter import limiter
 from app.api.routes import auth, feedback, health, query
 from app.config import get_settings
+from app.db.postgres import init_db
 from app.ingestion.chunker import chunk_documents
 from app.ingestion.embedder import embed_and_store
 from app.ingestion.pubmed_fetcher import fetch_pubmed_corpus
@@ -20,13 +20,13 @@ from app.retrieval.qdrant_client import collection_count, ensure_collection
 
 settings = get_settings()
 logger = structlog.get_logger("cliniq")
-limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("app_starting", service="cliniq-backend")
     try:
+        await init_db()
         ensure_collection()
         if collection_count() == 0 and settings.openai_api_key:
             logger.info("startup_ingestion_begin")
