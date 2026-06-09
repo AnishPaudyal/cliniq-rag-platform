@@ -12,6 +12,11 @@ from starlette.responses import JSONResponse
 
 from app.api.routes import auth, feedback, health, query
 from app.config import get_settings
+from app.ingestion.chunker import chunk_documents
+from app.ingestion.embedder import embed_and_store
+from app.ingestion.pubmed_fetcher import fetch_pubmed_corpus
+from app.retrieval.bm25_index import build_bm25_from_qdrant
+from app.retrieval.qdrant_client import collection_count, ensure_collection
 
 settings = get_settings()
 logger = structlog.get_logger("cliniq")
@@ -21,6 +26,17 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("app_starting", service="cliniq-backend")
+    try:
+        ensure_collection()
+        if collection_count() == 0 and settings.openai_api_key:
+            logger.info("startup_ingestion_begin")
+            corpus = await fetch_pubmed_corpus(target_count=500)
+            chunks = chunk_documents(corpus, strategy="sentence_boundary")
+            await embed_and_store(chunks)
+        if collection_count() > 0:
+            build_bm25_from_qdrant()
+    except Exception as exc:
+        logger.warning("startup_ingestion_skipped_or_failed", error=str(exc))
     yield
     logger.info("app_stopping", service="cliniq-backend")
 
