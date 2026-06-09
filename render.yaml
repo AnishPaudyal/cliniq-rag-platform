@@ -5,15 +5,24 @@ services:
     rootDir: backend
     plan: starter
     healthCheckPath: /health/live
+    autoDeploy: true
     envVars:
       - key: OPENAI_API_KEY
         sync: false
       - key: POSTGRES_URL
         sync: false
+      - key: POSTGRES_USER
+        sync: false
+      - key: POSTGRES_PASSWORD
+        sync: false
+      - key: POSTGRES_DB
+        sync: false
       - key: REDIS_URL
         sync: false
       - key: QDRANT_URL
         sync: false
+      - key: QDRANT_COLLECTION
+        value: cliniq_pubmed_chunks
       - key: JWT_SECRET
         sync: false
       - key: MLFLOW_TRACKING_URI
